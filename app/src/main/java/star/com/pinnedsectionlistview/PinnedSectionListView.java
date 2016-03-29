@@ -42,32 +42,13 @@ import android.widget.SectionIndexer;
  */
 public class PinnedSectionListView extends ListView {
 
-    //-- inner classes
-
-	/** List adapter to be implemented for being used with PinnedSectionListView adapter. */
-	public static interface PinnedSectionListAdapter extends ListAdapter {
-		/** This method shall return 'true' if views of given type has to be pinned. */
-		boolean isItemViewTypePinned(int viewType);
-	}
-
-	/** Wrapper class for pinned section view and its position in the list. */
-	static class PinnedSection {
-		public View view;
-		public int position;
-		public long id;
-	}
-
-	//-- class fields
-
-    // fields used for handling touch events
-    private final Rect mTouchRect = new Rect();
-    private final PointF mTouchPoint = new PointF();
-    private int mTouchSlop;
+    private final Rect mTouchRect = new Rect();//绘制矩形
+    private final PointF mTouchPoint = new PointF();//PointF用于坐标不是整数值的情况
+    private int mTouchSlop;//触发移动事件的最短距离，如果小于这个距离就不触发移动控件
     private View mTouchTarget;
     private MotionEvent mDownEvent;
 
-    // fields used for drawing shadow under a pinned section
-    private GradientDrawable mShadowDrawable;
+    private GradientDrawable mShadowDrawable;//支持使用渐变色来绘制图形
     private int mSectionsDistanceY;
     private int mShadowHeight;
 
@@ -83,10 +64,61 @@ public class PinnedSectionListView extends ListView {
     /** Pinned view Y-translation. We use it to stick pinned view to the next section. */
     int mTranslateY;
 
+
+    public PinnedSectionListView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        initView();
+    }
+
+    public PinnedSectionListView(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+        initView();
+    }
+
+    private void initView() {
+        setOnScrollListener(mOnScrollListener);
+        //触发移动事件的最短距离，如果小于这个距离就不触发移动控件
+        mTouchSlop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
+        initShadow(true);
+    }
+
+    @Override
+    public void setOnScrollListener(OnScrollListener listener) {
+        if (listener == mOnScrollListener) {
+            super.setOnScrollListener(listener);
+        } else {
+            mDelegateOnScrollListener = listener;
+        }
+    }
+
+    /**
+     * 大标题的阴影效果
+     * @param visible
+     */
+    public void initShadow(boolean visible) {
+        if (visible) {
+            if (mShadowDrawable == null) {
+                //从上到下的渐变，阴影效果
+                mShadowDrawable = new GradientDrawable(Orientation.TOP_BOTTOM,
+                        new int[] { Color.parseColor("#ffa0a0a0"), Color.parseColor("#50a0a0a0"), Color.parseColor("#00a0a0a0")});
+                //8*获取手机屏幕密度
+                mShadowHeight = (int) (8 * getResources().getDisplayMetrics().density);
+            }
+        } else {
+            if (mShadowDrawable != null) {
+                mShadowDrawable = null;
+                mShadowHeight = 0;
+            }
+        }
+    }
+
+
+
 	/** Scroll listener which does the magic */
 	private final OnScrollListener mOnScrollListener = new OnScrollListener() {
 
-		@Override public void onScrollStateChanged(AbsListView view, int scrollState) {
+		@Override
+        public void onScrollStateChanged(AbsListView view, int scrollState) {
 			if (mDelegateOnScrollListener != null) { // delegate
 				mDelegateOnScrollListener.onScrollStateChanged(view, scrollState);
 			}
@@ -128,58 +160,18 @@ public class PinnedSectionListView extends ListView {
 
 	/** Default change observer. */
     private final DataSetObserver mDataSetObserver = new DataSetObserver() {
-        @Override public void onChanged() {
+        @Override
+        public void onChanged() {
             recreatePinnedShadow();
         };
-        @Override public void onInvalidated() {
+
+        @Override
+        public void onInvalidated() {
             recreatePinnedShadow();
         }
     };
 
-	//-- constructors
 
-    public PinnedSectionListView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initView();
-    }
-
-    public PinnedSectionListView(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-        initView();
-    }
-
-    private void initView() {
-        setOnScrollListener(mOnScrollListener);
-        mTouchSlop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
-        initShadow(true);
-    }
-
-    //-- public API methods
-
-    public void setShadowVisible(boolean visible) {
-        initShadow(visible);
-        if (mPinnedSection != null) {
-            View v = mPinnedSection.view;
-            invalidate(v.getLeft(), v.getTop(), v.getRight(), v.getBottom() + mShadowHeight);
-        }
-    }
-
-    //-- pinned section drawing methods
-
-    public void initShadow(boolean visible) {
-        if (visible) {
-            if (mShadowDrawable == null) {
-                mShadowDrawable = new GradientDrawable(Orientation.TOP_BOTTOM,
-                        new int[] { Color.parseColor("#ffa0a0a0"), Color.parseColor("#50a0a0a0"), Color.parseColor("#00a0a0a0")});
-                mShadowHeight = (int) (8 * getResources().getDisplayMetrics().density);
-            }
-        } else {
-            if (mShadowDrawable != null) {
-                mShadowDrawable = null;
-                mShadowHeight = 0;
-            }
-        }
-    }
 
 	/** Create shadow wrapper with a pinned view for a view at given position */
 	void createPinnedShadow(int position) {
@@ -189,7 +181,10 @@ public class PinnedSectionListView extends ListView {
 		mRecycleSection = null;
 
 		// create new shadow, if needed
-		if (pinnedShadow == null) pinnedShadow = new PinnedSection();
+		if (pinnedShadow == null) {
+            pinnedShadow = new PinnedSection();
+        }
+
 		// request new view using recycled view, if such
 		View pinnedView = getAdapter().getView(position, pinnedShadow.view, PinnedSectionListView.this);
 
@@ -224,10 +219,11 @@ public class PinnedSectionListView extends ListView {
 		mPinnedSection = pinnedShadow;
 	}
 
-	/** Destroy shadow wrapper for currently pinned view */
+    /**
+     * 去除阴影效果
+     */
 	void destroyPinnedShadow() {
 	    if (mPinnedSection != null) {
-	        // keep shadow for being recycled later
 	        mRecycleSection = mPinnedSection;
 	        mPinnedSection = null;
 	    }
@@ -328,14 +324,7 @@ public class PinnedSectionListView extends ListView {
         }
 	}
 
-	@Override
-	public void setOnScrollListener(OnScrollListener listener) {
-		if (listener == mOnScrollListener) {
-			super.setOnScrollListener(listener);
-		} else {
-			mDelegateOnScrollListener = listener;
-		}
-	}
+
 
 	@Override
 	public void onRestoreInstanceState(Parcelable state) {
@@ -466,7 +455,6 @@ public class PinnedSectionListView extends ListView {
                     super.dispatchTouchEvent(mDownEvent);
                     super.dispatchTouchEvent(ev);
                     clearTouchTarget();
-
                 }
             }
 
@@ -521,4 +509,19 @@ public class PinnedSectionListView extends ListView {
         return ((PinnedSectionListAdapter) adapter).isItemViewTypePinned(viewType);
     }
 
+
+    //-- inner classes
+
+    /** List adapter to be implemented for being used with PinnedSectionListView adapter. */
+    public static interface PinnedSectionListAdapter extends ListAdapter {
+        /** This method shall return 'true' if views of given type has to be pinned. */
+        boolean isItemViewTypePinned(int viewType);
+    }
+
+    /** Wrapper class for pinned section view and its position in the list. */
+    static class PinnedSection {
+        public View view;
+        public int position;
+        public long id;
+    }
 }

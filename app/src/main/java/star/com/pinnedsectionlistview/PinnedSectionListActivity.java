@@ -40,51 +40,29 @@ import android.widget.Toast;
 
 public class PinnedSectionListActivity extends ListActivity implements OnClickListener {
 
-    private boolean hasHeaderAndFooter;
-    private boolean isFastScroll;
-    private boolean addPadding;
-    private boolean isShadowVisible = true;
-    private int mDatasetUpdateCount;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.i("aa","onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        if (savedInstanceState != null) {
-            isFastScroll = savedInstanceState.getBoolean("isFastScroll");
-            addPadding = savedInstanceState.getBoolean("addPadding");
-            isShadowVisible = savedInstanceState.getBoolean("isShadowVisible");
-            hasHeaderAndFooter = savedInstanceState.getBoolean("hasHeaderAndFooter");
-        }
-        Log.i("aa","onCreate-isFastScroll="+isFastScroll);
-        Log.i("aa","onCreate-addPadding="+addPadding);
-        Log.i("aa","onCreate-isShadowVisible="+isShadowVisible);
-        Log.i("aa","onCreate-hasHeaderAndFooter="+hasHeaderAndFooter);
-      //  initializeHeaderAndFooter();
         initializeAdapter();
-        initializePadding();
-
     }
 
-//    @Override
-//    protected void onSaveInstanceState(Bundle outState) {
-//        Log.i("aa","onSaveInstanceState");
-//        super.onSaveInstanceState(outState);
-//        outState.putBoolean("isFastScroll", isFastScroll);
-//        outState.putBoolean("addPadding", addPadding);
-//        outState.putBoolean("isShadowVisible", isShadowVisible);
-//        outState.putBoolean("hasHeaderAndFooter", hasHeaderAndFooter);
-//        Log.i("aa","onSaveInstanceState-isFastScroll="+isFastScroll);
-//        Log.i("aa","onSaveInstanceState-addPadding="+addPadding);
-//        Log.i("aa","onSaveInstanceState-isShadowVisible="+isShadowVisible);
-//        Log.i("aa","onSaveInstanceState-hasHeaderAndFooter="+hasHeaderAndFooter);
-//
-//    }
+
+    /**
+     * 初始化adapter
+     */
+    private void initializeAdapter() {
+        getListView().setFastScrollEnabled(false);
+        setListAdapter(new SimpleAdapter(this, android.R.layout.simple_list_item_1, android.R.id.text1));
+    }
+
+
 
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
-        Log.i("aa","onListItemClick");
         Item item = (Item) getListView().getAdapter().getItem(position);
         if (item != null) {
             Toast.makeText(this, "Item " + position + ": " + item.text, Toast.LENGTH_SHORT).show();
@@ -93,105 +71,11 @@ public class PinnedSectionListActivity extends ListActivity implements OnClickLi
         }
     }
 
-//    @Override
-//    public boolean onCreateOptionsMenu(Menu menu) {
-//        Log.i("aa","onCreateOptionsMenu");
-//        getMenuInflater().inflate(R.menu.main, menu);
-//        menu.getItem(0).setChecked(isFastScroll);
-//        menu.getItem(1).setChecked(addPadding);
-//        menu.getItem(2).setChecked(isShadowVisible);
-//        return true;
-//    }
-
-//    @Override
-//    public boolean onOptionsItemSelected(MenuItem item) {
-//        Log.i("aa","onOptionsItemSelected");
-//        switch (item.getItemId()) {
-//            case R.id.action_fastscroll:
-//                isFastScroll = !isFastScroll;
-//                item.setChecked(isFastScroll);
-//                initializeAdapter();
-//                break;
-//            case R.id.action_addpadding:
-//                addPadding = !addPadding;
-//                item.setChecked(addPadding);
-//                initializePadding();
-//                break;
-//            case R.id.action_showShadow:
-//                isShadowVisible = !isShadowVisible;
-//                item.setChecked(isShadowVisible);
-//                ((PinnedSectionListView)getListView()).setShadowVisible(isShadowVisible);
-//                break;
-//            case R.id.action_showHeaderAndFooter:
-//                hasHeaderAndFooter = !hasHeaderAndFooter;
-//                item.setChecked(hasHeaderAndFooter);
-//                initializeHeaderAndFooter();
-//                break;
-//            case R.id.action_updateDataset:
-//                updateDataset();
-//                break;
-//        }
-//        return true;
-//    }
-
-//    private void updateDataset() {
-//        mDatasetUpdateCount++;
-//        SimpleAdapter adapter = (SimpleAdapter) getListAdapter();
-//        switch (mDatasetUpdateCount % 4) {
-//            case 0: adapter.generateDataset('A', 'B', true); break;
-//            case 1: adapter.generateDataset('C', 'M', true); break;
-//            case 2: adapter.generateDataset('P', 'Z', true); break;
-//            case 3: adapter.generateDataset('A', 'Z', true); break;
-//        }
-//        adapter.notifyDataSetChanged();
-//    }
-
-    private void initializePadding() {
-        float density = getResources().getDisplayMetrics().density;
-        int padding = addPadding ? (int) (16 * density) : 0;
-        getListView().setPadding(padding, padding, padding, padding);
-    }
-
-    private void initializeHeaderAndFooter() {
-        setListAdapter(null);
-        Log.i("aa","initializeHeaderAndFooter-hasHeaderAndFooter="+hasHeaderAndFooter);
-        if (hasHeaderAndFooter) {
-            ListView list = getListView();
-
-            LayoutInflater inflater = LayoutInflater.from(this);
-            TextView header1 = (TextView) inflater.inflate(android.R.layout.simple_list_item_1, list, false);
-            header1.setText("First header");
-            list.addHeaderView(header1);
-
-            TextView header2 = (TextView) inflater.inflate(android.R.layout.simple_list_item_1, list, false);
-            header2.setText("Second header");
-            list.addHeaderView(header2);
-
-            TextView footer = (TextView) inflater.inflate(android.R.layout.simple_list_item_1, list, false);
-            footer.setText("Single footer");
-            list.addFooterView(footer);
-        }
-        initializeAdapter();
-    }
-
-    @SuppressLint("NewApi")
-    private void initializeAdapter() {
-        getListView().setFastScrollEnabled(isFastScroll);
-        Log.i("aa","initializeAdapter-isFastScroll="+isFastScroll);
-        if (isFastScroll) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                getListView().setFastScrollAlwaysVisible(true);
-            }
-            setListAdapter(new FastScrollAdapter(this, android.R.layout.simple_list_item_1, android.R.id.text1));
-        } else {
-            setListAdapter(new SimpleAdapter(this, android.R.layout.simple_list_item_1, android.R.id.text1));
-        }
-    }
-
     @Override
     public void onClick(View v) {
         Toast.makeText(this, "Item: " + v.getTag() , Toast.LENGTH_SHORT).show();
     }
+
 
     static class SimpleAdapter extends ArrayAdapter<Item> implements PinnedSectionListView.PinnedSectionListAdapter {
 
@@ -201,7 +85,6 @@ public class PinnedSectionListActivity extends ListActivity implements OnClickLi
 
         public SimpleAdapter(Context context, int resource, int textViewResourceId) {
             super(context, resource, textViewResourceId);
-            Log.i("aa","SimpleAdapter");
             generateDataset('A', 'Z', false);
         }
 
@@ -212,14 +95,12 @@ public class PinnedSectionListActivity extends ListActivity implements OnClickLi
             //  A--65   Z--90
             final int sectionsNumber = to - from + 1;//A-Z=sectionsNumber=26
 
-            prepareSections(sectionsNumber);
 
             int sectionPosition = 0, listPosition = 0;
             for (char i=0; i<sectionsNumber; i++) {
                 Item section = new Item(Item.SECTION, String.valueOf((char)('A' + i)));
                 section.sectionPosition = sectionPosition;
                 section.listPosition = listPosition++;
-                onSectionAdded(section, sectionPosition);
                 add(section);
 
                 final int itemsNumber = 10;
@@ -234,8 +115,6 @@ public class PinnedSectionListActivity extends ListActivity implements OnClickLi
             }
         }
         
-        protected void prepareSections(int sectionsNumber) { }
-        protected void onSectionAdded(Item section, int sectionPosition) { }
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
@@ -243,7 +122,7 @@ public class PinnedSectionListActivity extends ListActivity implements OnClickLi
             view.setTextColor(Color.DKGRAY);
             view.setTag("" + position);
             Item item = getItem(position);
-            if (item.type == Item.SECTION) {
+            if (item.type == Item.SECTION) {//大标题
                 //每4个颜色一组
                 view.setBackgroundColor(parent.getResources().getColor(COLORS[item.sectionPosition % COLORS.length]));
             }
@@ -272,52 +151,11 @@ public class PinnedSectionListActivity extends ListActivity implements OnClickLi
 
     }
 
-    static class FastScrollAdapter extends SimpleAdapter implements SectionIndexer {
-
-        private Item[] sections;
-
-        public FastScrollAdapter(Context context, int resource, int textViewResourceId) {
-            super(context, resource, textViewResourceId);
-            Log.i("aa","FastScrollAdapter");
-        }
-
-        @Override
-        protected void prepareSections(int sectionsNumber) {
-            sections = new Item[sectionsNumber];
-        }
-
-        @Override
-        protected void onSectionAdded(Item section, int sectionPosition) {
-            sections[sectionPosition] = section;
-        }
-
-        @Override
-        public Item[] getSections() {
-            return sections;
-        }
-
-        @Override
-        public int getPositionForSection(int section) {
-            if (section >= sections.length) {
-                section = sections.length - 1;
-            }
-            return sections[section].listPosition;
-        }
-
-        @Override
-        public int getSectionForPosition(int position) {
-            if (position >= getCount()) {
-                position = getCount() - 1;
-            }
-            return getItem(position).sectionPosition;
-        }
-
-    }
 
 	static class Item {
 
-		public static final int ITEM = 0;
-		public static final int SECTION = 1;
+		public static final int ITEM = 0;//对应的item
+		public static final int SECTION = 1;//大标题
 
 		public final int type;
 		public final String text;
